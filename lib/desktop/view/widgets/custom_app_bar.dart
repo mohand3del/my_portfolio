@@ -3,29 +3,40 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:my_portfolio/core/constant/app_colors.dart';
 import 'package:my_portfolio/core/helper/extensions.dart';
 
-class CustomAppBar extends StatelessWidget {
+class CustomAppBar extends StatefulWidget {
   const CustomAppBar({
     super.key,
     this.selectedIndex,
     this.onItemSelected,
+    this.scrollKeys,
   });
 
   final int? selectedIndex;
   final ValueChanged<int>? onItemSelected;
+  final List<GlobalKey>? scrollKeys; // List of keys for each section
+
+  @override
+  State<CustomAppBar> createState() => _CustomAppBarState();
+}
+
+class _CustomAppBarState extends State<CustomAppBar> {
+  void scrollToSection(GlobalKey key) {
+    final context = key.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-
     final List<String> menuItems = ['Home', 'About', 'Projects', 'Contact'];
 
     return Padding(
-      padding: EdgeInsets.only(
-        top: screenHeight * 19 / screenHeight,
-        left: screenWidth * 160 / screenWidth,
-        right: screenWidth * 160 / screenWidth,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 19, horizontal: 160),
       child: Row(
         children: [
           Flexible(
@@ -39,29 +50,33 @@ class CustomAppBar extends StatelessWidget {
               ),
             ),
           ),
-          const Spacer(
-            flex: 2,
-          ),
+          const Spacer(flex: 2),
           ...List.generate(
             menuItems.length,
             (index) => Row(
               children: [
                 GestureDetector(
                   onTap: () {
-                    onItemSelected!(index); // Trigger the callback
+                    // Scroll to section if scrollKeys are provided
+                    if (widget.scrollKeys != null &&
+                        index < widget.scrollKeys!.length) {
+                      scrollToSection(widget.scrollKeys![index]);
+                    }
+
+                    // Trigger the callback if provided
+                    if (widget.onItemSelected != null) {
+                      widget.onItemSelected!(index);
+                    }
                   },
-                  child: Flexible(
-                    child: Text(
-                      menuItems[index],
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: selectedIndex == index
-                            ? AppColors.primaryColor // Highlighted color
-                            : AppColors.white,
-                        // Default color
-                      ),
+                  child: Text(
+                    menuItems[index],
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: widget.selectedIndex == index
+                          ? AppColors.primaryColor // Highlighted color
+                          : AppColors.white, // Default color
                     ),
                   ),
                 ),
